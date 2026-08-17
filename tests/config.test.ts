@@ -36,6 +36,27 @@ describe("loadEnv()", () => {
     expect(typeof env.PORT).toBe("number");
   });
 
+  it("fails fast when PORT is non-numeric instead of binding a random port", () => {
+    // PORT="abc" coerces to NaN; without the .int() guard Zod would accept it and
+    // the server would bind an OS-assigned random port. It must fail boot instead.
+    process.env.GEMINI_API_KEY = "test-key";
+    process.env.PORT = "abc";
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const exitSpy = vi
+      .spyOn(process, "exit")
+      .mockImplementation(((code?: number) => {
+        throw new Error(`process.exit:${code}`);
+      }) as never);
+
+    expect(() => loadEnv()).toThrow("process.exit:1");
+    expect(exitSpy).toHaveBeenCalledWith(1);
+
+    const printed = errorSpy.mock.calls.map((c) => String(c[0])).join("\n");
+    expect(printed).toContain("PORT");
+  });
+
   it("fails fast (process.exit(1)) with a message naming GEMINI_API_KEY when it is missing", () => {
     // GEMINI_API_KEY intentionally absent (deleted in beforeEach).
     const errorSpy = vi

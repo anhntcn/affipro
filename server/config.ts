@@ -6,11 +6,18 @@ import { z } from "zod";
 // import createApp() (with the SDK mocked) do not require a real GEMINI_API_KEY.
 //
 // - GEMINI_API_KEY: required non-empty string (server-side only, per CLAUDE.md).
-// - PORT: coerced to a number, defaults to 3000 (replaces the old hardcode).
+// - PORT: a valid TCP port (integer 1–65535), defaults to 3000. A non-numeric
+//   value (e.g. PORT="abc" → NaN) fails boot rather than silently binding a
+//   random OS-assigned port — .int() rejects NaN, so the fail-fast path fires.
 // - NODE_ENV: development | production | test, defaults to development.
 const EnvSchema = z.object({
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
-  PORT: z.coerce.number().default(3000),
+  PORT: z.coerce
+    .number()
+    .int("PORT must be an integer")
+    .min(1, "PORT must be between 1 and 65535")
+    .max(65535, "PORT must be between 1 and 65535")
+    .default(3000),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
