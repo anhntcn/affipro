@@ -1,35 +1,104 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import { createServer as createViteServer } from "vite";
+import { MODEL_ID } from "./src/schema/modelAllowlist";
+import { GeneratedContentSchema } from "./src/schema/generatedContent";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+// Re-export the pinned model id so tests / callers import it from one place.
+export { MODEL_ID };
 
-  app.use(express.json());
+// Typed structured-output schema sent to Gemini (D-02, Pattern 2). Mirrors the
+// 4-channel shape; scene_number uses NUMBER (INTEGER is unreliable per Pitfall 4).
+const responseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    product_analysis: {
+      type: Type.OBJECT,
+      properties: {
+        product_name: { type: Type.STRING },
+        target_audience: { type: Type.STRING },
+        key_benefits: { type: Type.ARRAY, items: { type: Type.STRING } },
+      },
+      required: ["product_name", "target_audience", "key_benefits"],
+    },
+    facebook_threads: {
+      type: Type.OBJECT,
+      properties: {
+        hook_headline: { type: Type.STRING },
+        story_or_problem: { type: Type.STRING },
+        product_highlights: { type: Type.ARRAY, items: { type: Type.STRING } },
+        call_to_action: { type: Type.STRING },
+        hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
+      },
+      required: [
+        "hook_headline",
+        "story_or_problem",
+        "product_highlights",
+        "call_to_action",
+        "hashtags",
+      ],
+    },
+    short_video_script: {
+      type: Type.OBJECT,
+      properties: {
+        video_title: { type: Type.STRING },
+        estimated_duration: { type: Type.STRING },
+        scenes: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              scene_number: { type: Type.NUMBER },
+              time_range: { type: Type.STRING },
+              visual_action: { type: Type.STRING },
+              voiceover: { type: Type.STRING },
+              on_screen_text: { type: Type.STRING },
+            },
+            required: [
+              "scene_number",
+              "time_range",
+              "visual_action",
+              "voiceover",
+              "on_screen_text",
+            ],
+          },
+        },
+      },
+      required: ["video_title", "estimated_duration", "scenes"],
+    },
+    instant_deal_telegram_zalo: { type: Type.STRING },
+  },
+  required: [
+    "product_analysis",
+    "facebook_threads",
+    "short_video_script",
+    "instant_deal_telegram_zalo",
+  ],
+};
 
-  // API Route to generate affiliate content
-  app.post("/api/generate", async (req, res) => {
-    try {
-      const { productInfo, affiliateLink } = req.body;
+// The /api/generate handler — extracted so it can be tested without Vite.
+async function generateHandler(req: express.Request, res: express.Response) {
+  try {
+    const { productInfo, affiliateLink } = req.body;
 
-      if (!productInfo || !affiliateLink) {
-        return res.status(400).json({ error: "Missing productInfo or affiliateLink" });
-      }
+    if (!productInfo || !affiliateLink) {
+      return res.status(400).json({ error: "Missing productInfo or affiliateLink" });
+    }
 
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        return res.status(500).json({ error: "GEMINI_API_KEY environment variable is missing" });
-      }
+    // Defensive per-request fallback; primary fail-fast env check arrives in Plan 02.
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "GEMINI_API_KEY environment variable is missing" });
+    }
 
-      const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI({ apiKey });
 
-      const prompt = `
+    const prompt = `
 VAI TRÒ (ROLE)
 Bạn là một Chuyên gia Copywriting & Growth Marketer hàng đầu trong lĩnh vực Affiliate Marketing và E-commerce tại thị trường Việt Nam. Bạn hiểu sâu sắc tâm lý khách hàng, hành vi mua sắm trực tuyến (Shopee, TikTok Shop, Lazada), và các công thức viết bài chuyển đổi cao (AIDA, PAS, FAB).
 
@@ -81,27 +150,55 @@ Bạn BẮT BUỘC phải trả về kết quả dưới dạng một JSON Objec
 }
       `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        }
-      });
+    const response = await ai.models.generateContent({
+      model: MODEL_ID,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema,
+      },
+    });
 
-      const text = response.text;
-      if (!text) {
-          throw new Error("No response from Gemini");
-      }
-      
-      const jsonResponse = JSON.parse(text);
-      res.json(jsonResponse);
-
-    } catch (error: any) {
-      console.error("Error generating content:", error);
-      res.status(500).json({ error: error.message || "Failed to generate content" });
+    const text = response.text;
+    if (!text) {
+      // Do not crash; do not leak internals. Full failure taxonomy + Vietnamese
+      // messaging is Plan 02 — here we only ensure a non-2xx JSON error.
+      return res.status(502).json({ error: "Failed to generate content" });
     }
-  });
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return res.status(502).json({ error: "Failed to generate content" });
+    }
+
+    // Double-guard (D-03): re-validate the model output server-side before it
+    // reaches the client. Invalid shape → non-2xx, never forwarded.
+    const result = GeneratedContentSchema.safeParse(parsed);
+    if (!result.success) {
+      return res.status(502).json({ error: "Failed to generate content" });
+    }
+
+    return res.json(result.data);
+  } catch (error: any) {
+    console.error("Error generating content:", error);
+    return res.status(500).json({ error: "Failed to generate content" });
+  }
+}
+
+// Vite-free Express app: importable in tests without booting Vite or listen().
+export function createApp() {
+  const app = express();
+  app.use(express.json({ limit: "32kb" })); // caps prompt-injection / oversized-body surface (V5)
+  app.post("/api/generate", generateHandler);
+  return app;
+}
+
+// Full server: createApp() + Vite dev middleware / static serving + listen().
+async function startServer() {
+  const app = createApp();
+  const PORT = 3000;
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
@@ -123,4 +220,8 @@ Bạn BẮT BUỘC phải trả về kết quả dưới dạng một JSON Objec
   });
 }
 
-startServer();
+// Only boot when run as the process entry — never on import (so tests importing
+// createApp() do not start Vite). Pitfall 2 / Pattern 1.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  startServer();
+}
