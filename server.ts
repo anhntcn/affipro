@@ -82,6 +82,110 @@ const responseSchema = {
   ],
 };
 
+// Failure taxonomy for the generate seam (Pattern 3, D-04/D-05).
+// SAFETY / RECITATION are deterministic Gemini blocks and SCHEMA is a hard
+// Zod-shape failure — none of these are ever retried (a second identical call
+// wastes a paid round-trip and fails the same way). MAX_TOKENS / OTHER / EMPTY /
+// PARSE are transient and get exactly ONE retry.
+type FailReason =
+  | "SAFETY"
+  | "RECITATION"
+  | "SCHEMA"
+  | "MAX_TOKENS"
+  | "OTHER"
+  | "EMPTY"
+  | "PARSE";
+
+// finishReasons that must never be retried (deterministic blocks).
+const HARD_FAIL_FINISH = new Set(["SAFETY", "RECITATION"]);
+
+// NOTE: this project does not enable strictNullChecks (see tsconfig.json), so a
+// `{ ok: true } | { ok: false }` discriminated union does NOT narrow reliably.
+// Use a single flat shape with optional failure fields and branch on `ok`
+// explicitly; `reason`/`retryable` are only meaningful when `ok === false`.
+type GenerateOutcome = {
+  ok: boolean;
+  data?: unknown;
+  reason?: FailReason;
+  retryable?: boolean;
+};
+
+// Map every internal failure reason to a clear, human-written Vietnamese message.
+// CRITICAL (T-00-06): the returned message must never contain a stack trace, the
+// raw error.message, or JSON-parser output. Technical detail is logged
+// server-side only via console.error.
+function vietnameseErrorFor(reason: FailReason): { status: number; message: string } {
+  switch (reason) {
+    case "SAFETY":
+    case "RECITATION":
+      return {
+        status: 422,
+        message:
+          "Nội dung sản phẩm có thể vi phạm chính sách nên AI đã từ chối tạo. Vui lòng chỉnh sửa mô tả và thử lại.",
+      };
+    case "SCHEMA":
+      return {
+        status: 502,
+        message:
+          "AI trả về nội dung không đúng định dạng mong đợi. Vui lòng thử tạo lại sau giây lát.",
+      };
+    case "MAX_TOKENS":
+    case "OTHER":
+    case "EMPTY":
+    case "PARSE":
+    default:
+      return {
+        status: 502,
+        message:
+          "Không tạo được nội dung do phản hồi từ AI bị lỗi hoặc chưa hoàn chỉnh. Vui lòng thử lại.",
+      };
+  }
+}
+
+// Single attempt against the model. Reads finishReason BEFORE .text (Pitfall 3 —
+// .text is undefined on safety blocks), guards JSON.parse, then Zod-validates.
+async function generateOnce(
+  ai: GoogleGenAI,
+  prompt: string,
+): Promise<GenerateOutcome> {
+  const response = await ai.models.generateContent({
+    model: MODEL_ID,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema,
+    },
+  });
+
+  // finishReason FIRST — on SAFETY/RECITATION there is no text part to read.
+  const finish = response.candidates?.[0]?.finishReason;
+  if (finish && finish !== "STOP") {
+    const reason = finish as FailReason;
+    return { ok: false, reason, retryable: !HARD_FAIL_FINISH.has(finish) };
+  }
+
+  const text = response.text;
+  if (!text) {
+    return { ok: false, reason: "EMPTY", retryable: true };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    // Transient formatting glitch — retry once may return valid JSON.
+    return { ok: false, reason: "PARSE", retryable: true };
+  }
+
+  // Double-guard (D-03): a hard shape failure is deterministic — never retry.
+  const result = GeneratedContentSchema.safeParse(parsed);
+  if (!result.success) {
+    return { ok: false, reason: "SCHEMA", retryable: false };
+  }
+
+  return { ok: true, data: result.data };
+}
+
 // The /api/generate handler — extracted so it can be tested without Vite.
 async function generateHandler(req: express.Request, res: express.Response) {
   try {
@@ -91,7 +195,7 @@ async function generateHandler(req: express.Request, res: express.Response) {
       return res.status(400).json({ error: "Missing productInfo or affiliateLink" });
     }
 
-    // Defensive per-request fallback; primary fail-fast env check arrives in Plan 02.
+    // Defensive per-request fallback; primary fail-fast env check is loadEnv() at boot.
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: "GEMINI_API_KEY environment variable is missing" });
@@ -151,40 +255,33 @@ Bạn BẮT BUỘC phải trả về kết quả dưới dạng một JSON Objec
 }
       `;
 
-    const response = await ai.models.generateContent({
-      model: MODEL_ID,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema,
-      },
-    });
-
-    const text = response.text;
-    if (!text) {
-      // Do not crash; do not leak internals. Full failure taxonomy + Vietnamese
-      // messaging is Plan 02 — here we only ensure a non-2xx JSON error.
-      return res.status(502).json({ error: "Failed to generate content" });
+    // First attempt; retry EXACTLY ONCE only for transient reasons (D-05).
+    const first = await generateOnce(ai, prompt);
+    let outcome: GenerateOutcome = first;
+    if (!first.ok && first.retryable) {
+      console.error(
+        `Generate attempt failed (reason=${first.reason}); retrying once.`,
+      );
+      outcome = await generateOnce(ai, prompt);
     }
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      return res.status(502).json({ error: "Failed to generate content" });
+    if (outcome.ok) {
+      return res.json(outcome.data);
     }
 
-    // Double-guard (D-03): re-validate the model output server-side before it
-    // reaches the client. Invalid shape → non-2xx, never forwarded.
-    const result = GeneratedContentSchema.safeParse(parsed);
-    if (!result.success) {
-      return res.status(502).json({ error: "Failed to generate content" });
-    }
-
-    return res.json(result.data);
+    // Failure after the bounded retry policy: log the technical reason
+    // server-side, return a leak-free Vietnamese message to the client (T-00-06).
+    const reason: FailReason = outcome.reason ?? "OTHER";
+    console.error(`Generate failed after retry policy: reason=${reason}`);
+    const { status, message } = vietnameseErrorFor(reason);
+    return res.status(status).json({ error: message });
   } catch (error: any) {
+    // Unexpected transport/SDK error — log detail server-side, never leak it.
     console.error("Error generating content:", error);
-    return res.status(500).json({ error: "Failed to generate content" });
+    return res.status(502).json({
+      error:
+        "Không tạo được nội dung do phản hồi từ AI bị lỗi hoặc chưa hoàn chỉnh. Vui lòng thử lại.",
+    });
   }
 }
 
