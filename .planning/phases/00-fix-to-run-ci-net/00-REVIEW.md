@@ -22,7 +22,24 @@ findings:
   warning: 6
   info: 3
   total: 10
-status: issues_found
+status: partially_resolved
+remediated:
+  - id: CR-01
+    commit: 4512c92
+    note: fabricated gemini-3.x ids removed from allowlist; honest comment
+  - id: WR-01
+    commit: 98d9127
+    note: deterministic-block finishReason set completed
+  - id: WR-02
+    commit: 98d9127
+    note: unsound finish-as-FailReason cast replaced with safe normalization
+  - id: WR-03
+    commit: f52b295
+    note: PORT now .int().min(1).max(65535); non-numeric fails boot
+deferred_advisory:
+  - WR-04  # NODE_ENV enum strictness (rejects staging/empty) — intentional, left as-is
+  - WR-05  # top-level channel objects unguarded — mitigated by ErrorBoundary
+  - INFO x3
 ---
 
 # Phase 00: Code Review Report
@@ -30,7 +47,22 @@ status: issues_found
 **Reviewed:** 2026-08-17T09:46:53Z
 **Depth:** standard
 **Files Reviewed:** 13
-**Status:** issues_found
+**Status:** partially_resolved (blocker + 2 correctness warnings fixed; 4 advisory items deferred)
+
+## Remediation (post-review, 2026-08-17)
+
+Applied during phase execution after the user chose "fix blocker + correctness warnings":
+
+| Finding | Severity | Fix | Commit |
+|---------|----------|-----|--------|
+| CR-01 | Critical | Removed 4 fabricated `gemini-3.x-flash` ids (incl. CLAUDE.md-flagged `gemini-3.7-flash`); allowlist now holds only real Gemini 2.5 ids + honest comment | `4512c92` |
+| WR-01 | Warning | `DETERMINISTIC_BLOCK_FINISH` now includes `BLOCKLIST`/`PROHIBITED_CONTENT`/`SPII`/`IMAGE_SAFETY` so real blocks are never retried | `98d9127` |
+| WR-02 | Warning | Replaced unsound `finish as FailReason` cast with a type-safe normalization (blocks → 422, else → one retry) | `98d9127` |
+| WR-03 | Warning | `PORT` schema is now `.int().min(1).max(65535)`; `PORT="abc"` fails boot instead of binding a random port | `f52b295` |
+
+Each fix carries a locking regression test (PROHIBITED_CONTENT no-retry; non-numeric PORT boot failure). Full gate re-run after remediation: `tsc` clean, 14/14 tests pass, allowlist check exit 0.
+
+**Deferred (advisory, not fixed):** WR-04 (NODE_ENV enum strictness — treated as intentional), WR-05 (top-level channel objects unguarded — already caught by the ErrorBoundary), and the 3 Info items. Address later via `/gsd-code-review 00 --fix` if desired.
 
 ## Summary
 
