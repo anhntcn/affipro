@@ -1,0 +1,35 @@
+name: CI
+
+# Runs on every push and pull request to the existing origin remote.
+# Enforces the Phase 0 fixes so they cannot silently regress:
+#   - tsc type check
+#   - full Vitest suite (happy-path + malformed/unguarded-parse + safety + config)
+#   - static model-id allowlist check (FIX-01)
+#
+# No Gemini API key / secret is configured (D-10): the SDK is mocked in tests and
+# the allowlist check is static, so CI spends no Gemini quota.
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type check
+        run: bunx tsc --noEmit
+
+      - name: Run tests
+        run: bunx vitest run
+
+      - name: Model-id allowlist check
+        run: bun scripts/check-model-allowlist.mjs
