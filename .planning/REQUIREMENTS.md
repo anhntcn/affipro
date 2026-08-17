@@ -11,9 +11,9 @@ Requirements cho bản phát hành nội bộ đầu tiên. Mỗi mục map vào
 
 - [x] **FIX-01**: Hệ thống gọi Gemini bằng model id hợp lệ đã được xác minh tại thời điểm build (không dùng id không tồn tại)
 - [x] **FIX-02**: Phản hồi Gemini được ép cấu trúc bằng `responseSchema` và validate (Zod) trước khi trả về client
-- [ ] **FIX-03**: Khi Gemini trả JSON hỏng/thiếu field/truncate, hệ thống báo lỗi rõ ràng thay vì crash (kiểm `finishReason`, guard parse)
+- [x] **FIX-03**: Khi Gemini trả JSON hỏng/thiếu field/truncate, hệ thống báo lỗi rõ ràng thay vì crash (kiểm `finishReason`, guard parse)
 - [ ] **FIX-04**: UI hiển thị kết quả không crash khi thiếu field (guard mọi `.map`/truy cập mảng, có ErrorBoundary)
-- [ ] **FIX-05**: Server đọc `PORT` từ biến môi trường; có `.env.local.example`; dọn metadata/README template AI Studio
+- [x] **FIX-05**: Server đọc `PORT` từ biến môi trường; có `.env.local.example`; dọn metadata/README template AI Studio
 - [ ] **FIX-06**: Có lưới test CI (happy path + JSON hỏng + model-id allowlist) chạy tự động chống regression
 
 ### Authentication
@@ -97,9 +97,9 @@ Mapping từ ROADMAP.md (6 phases: 0–5).
 |-------------|-------|--------|
 | FIX-01 | Phase 0 | Complete |
 | FIX-02 | Phase 0 | Complete |
-| FIX-03 | Phase 0 | Pending |
+| FIX-03 | Phase 0 | Complete |
 | FIX-04 | Phase 0 | Pending |
-| FIX-05 | Phase 0 | Pending |
+| FIX-05 | Phase 0 | Complete |
 | FIX-06 | Phase 0 | Pending |
 | AUTH-01 | Phase 1 | Pending |
 | AUTH-02 | Phase 1 | Pending |
