@@ -146,6 +146,21 @@ describe('/api/generate', () => {
     expect(mockGenerate).toHaveBeenCalledTimes(1);
   });
 
+  it('PROHIBITED_CONTENT (deterministic block) → 422 VN error, called exactly ONCE (never retried)', async () => {
+    // A real Gemini deterministic block reason beyond SAFETY/RECITATION. It must
+    // be treated as a content-policy block: 422, and NO wasted second paid call.
+    // (Regression guard for the finishReason taxonomy — WR-01/WR-02.)
+    mockGenerate.mockResolvedValue({
+      candidates: [{ finishReason: 'PROHIBITED_CONTENT' }],
+    });
+
+    const res = await POST();
+
+    expect(res.status).toBe(422);
+    assertNoLeak(res.body);
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
   it('malformed JSON text on both attempts → >=400, no crash (PARSE retryable once)', async () => {
     mockGenerate.mockResolvedValue({
       candidates: [{ finishReason: 'STOP' }],

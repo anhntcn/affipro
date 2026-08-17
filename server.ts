@@ -83,10 +83,10 @@ const responseSchema = {
 };
 
 // Failure taxonomy for the generate seam (Pattern 3, D-04/D-05).
-// SAFETY / RECITATION are deterministic Gemini blocks and SCHEMA is a hard
-// Zod-shape failure — none of these are ever retried (a second identical call
-// wastes a paid round-trip and fails the same way). MAX_TOKENS / OTHER / EMPTY /
-// PARSE are transient and get exactly ONE retry.
+// Deterministic Gemini content blocks (every reason in DETERMINISTIC_BLOCK_FINISH
+// below) plus a hard Zod-shape failure (SCHEMA) are NEVER retried — a second
+// identical call wastes a paid round-trip and fails the same way. MAX_TOKENS /
+// OTHER / EMPTY / PARSE are transient and get exactly ONE retry.
 type FailReason =
   | "SAFETY"
   | "RECITATION"
@@ -96,8 +96,18 @@ type FailReason =
   | "EMPTY"
   | "PARSE";
 
-// finishReasons that must never be retried (deterministic blocks).
-const HARD_FAIL_FINISH = new Set(["SAFETY", "RECITATION"]);
+// finishReasons that are deterministic content-policy blocks — never retried.
+// Gemini emits more of these than SAFETY/RECITATION; a real block missing from
+// this set would be (incorrectly) treated as transient and retried once for
+// nothing, violating the "never retry deterministic" rule.
+const DETERMINISTIC_BLOCK_FINISH = new Set([
+  "SAFETY",
+  "RECITATION",
+  "BLOCKLIST",
+  "PROHIBITED_CONTENT",
+  "SPII",
+  "IMAGE_SAFETY",
+]);
 
 // NOTE: this project does not enable strictNullChecks (see tsconfig.json), so a
 // `{ ok: true } | { ok: false }` discriminated union does NOT narrow reliably.
@@ -157,11 +167,19 @@ async function generateOnce(
     },
   });
 
-  // finishReason FIRST — on SAFETY/RECITATION there is no text part to read.
+  // finishReason FIRST — on a content block there is no text part to read.
+  // Normalize the raw finishReason into our FailReason taxonomy so the union
+  // stays sound (no unchecked cast) and deterministic blocks never retry.
   const finish = response.candidates?.[0]?.finishReason;
   if (finish && finish !== "STOP") {
-    const reason = finish as FailReason;
-    return { ok: false, reason, retryable: !HARD_FAIL_FINISH.has(finish) };
+    if (DETERMINISTIC_BLOCK_FINISH.has(finish)) {
+      // Any content-policy block → the same 422 "content may violate policy"
+      // path as SAFETY, and never a wasted retry.
+      return { ok: false, reason: "SAFETY", retryable: false };
+    }
+    // MAX_TOKENS and any other non-STOP reason are transient → exactly one retry.
+    const reason: FailReason = finish === "MAX_TOKENS" ? "MAX_TOKENS" : "OTHER";
+    return { ok: false, reason, retryable: true };
   }
 
   const text = response.text;
