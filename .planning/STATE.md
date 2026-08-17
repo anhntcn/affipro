@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 00
 current_phase_name: fix-to-run-ci-net
-status: executing
-stopped_at: Completed 00-03-PLAN.md
-last_updated: "2026-08-17T09:28:41.663Z"
+status: verifying
+stopped_at: Completed 00-04-PLAN.md
+last_updated: "2026-08-17T09:36:41.858Z"
 last_activity: 2026-08-17
 last_activity_desc: Phase 00 execution started
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-08-17)
 
 Phase: 00 (fix-to-run-ci-net) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-17 — Phase 00 execution started
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 75%
 | Phase 00 P01 | 6min | 3 tasks | 8 files |
 | Phase 00 P02 | 5min | 3 tasks | 4 files |
 | Phase 00 P03 | 4min | 3 tasks | 4 files |
+| Phase 00 P04 | 10min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Recent decisions affecting current work:
 - [Phase ?]: 00-02: Flat GenerateOutcome shape (not discriminated union) because tsconfig lacks strictNullChecks
 - [Phase ?]: 00-02: SAFETY/RECITATION->422, SCHEMA/PARSE/EMPTY/MAX_TOKENS/OTHER->502; retry once only for transient reasons
 - [Phase ?]: 00-03: Client crash-proofing — class ErrorBoundary (Vietnamese fallback) + null-guard every array .map/.join in ResultDisplay; declare props workaround since @types/react absent
+- [Phase ?]: 00-04: allowlist script runs via 'bun <file>' not 'bunx' (bunx 404s on local paths)
+- [Phase ?]: 00-04: CI has no Gemini secret — SDK mocked in tests, model-id check is static (D-10)
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T09:28:34.601Z
-Stopped at: Completed 00-03-PLAN.md
+Last session: 2026-08-17T09:36:33.449Z
+Stopped at: Completed 00-04-PLAN.md
 Resume file: None
