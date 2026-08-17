@@ -9,8 +9,8 @@ Requirements cho bản phát hành nội bộ đầu tiên. Mỗi mục map vào
 
 ### Fix-to-run (Nền tảng ổn định)
 
-- [ ] **FIX-01**: Hệ thống gọi Gemini bằng model id hợp lệ đã được xác minh tại thời điểm build (không dùng id không tồn tại)
-- [ ] **FIX-02**: Phản hồi Gemini được ép cấu trúc bằng `responseSchema` và validate (Zod) trước khi trả về client
+- [x] **FIX-01**: Hệ thống gọi Gemini bằng model id hợp lệ đã được xác minh tại thời điểm build (không dùng id không tồn tại)
+- [x] **FIX-02**: Phản hồi Gemini được ép cấu trúc bằng `responseSchema` và validate (Zod) trước khi trả về client
 - [ ] **FIX-03**: Khi Gemini trả JSON hỏng/thiếu field/truncate, hệ thống báo lỗi rõ ràng thay vì crash (kiểm `finishReason`, guard parse)
 - [ ] **FIX-04**: UI hiển thị kết quả không crash khi thiếu field (guard mọi `.map`/truy cập mảng, có ErrorBoundary)
 - [ ] **FIX-05**: Server đọc `PORT` từ biến môi trường; có `.env.local.example`; dọn metadata/README template AI Studio
@@ -95,8 +95,8 @@ Mapping từ ROADMAP.md (6 phases: 0–5).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 0 | Pending |
-| FIX-02 | Phase 0 | Pending |
+| FIX-01 | Phase 0 | Complete |
+| FIX-02 | Phase 0 | Complete |
 | FIX-03 | Phase 0 | Pending |
 | FIX-04 | Phase 0 | Pending |
 | FIX-05 | Phase 0 | Pending |
@@ -126,6 +126,7 @@ Mapping từ ROADMAP.md (6 phases: 0–5).
 | DEPLOY-02 | Phase 5 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 27 total
 - Mapped to phases: 27 ✓
 - Unmapped: 0 ✓

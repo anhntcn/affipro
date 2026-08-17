@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 0
-current_phase_name: Fix-to-run + CI net
+current_phase: 00
+current_phase_name: fix-to-run-ci-net
 status: executing
-stopped_at: Phase 0 context gathered
-last_updated: "2026-08-17T08:48:32.691Z"
+stopped_at: Completed 00-01-PLAN.md
+last_updated: "2026-08-17T09:13:21.659Z"
 last_activity: 2026-08-17
-last_activity_desc: Roadmap created (6 phases, 27/27 v1 requirements mapped)
+last_activity_desc: Phase 00 execution started
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
 ---
 
 # Project State
@@ -23,16 +23,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-17)
 
 **Core value:** Từ một mô tả sản phẩm + link affiliate, tạo ra bộ nội dung đa kênh chất lượng, tự nhiên, đúng tâm lý người mua Việt — nhanh và đáng tin cậy.
-**Current focus:** Phase 0 — Fix-to-run + CI net
+**Current focus:** Phase 00 — fix-to-run-ci-net
 
 ## Current Position
 
-Phase: 0 of 6 (Fix-to-run + CI net)
-Plan: 0 of TBD in current phase
+Phase: 00 (fix-to-run-ci-net) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-17 — Roadmap created (6 phases, 27/27 v1 requirements mapped)
+Last activity: 2026-08-17 — Phase 00 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 00 P01 | 6min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -67,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 1/2]: Two anti-lock-in seams (verifyUser auth, db/client.ts) must land before any per-user feature; SPA uses Supabase SDK for OAuth token only, all data via Express.
 - [Phase 2]: Persist an immutable prompt_version + config snapshot from the first generation — the single most important schema decision for the optimization loop.
 - [Phase 3]: LLM-judge runs inline behind services/judge.ts seam; judge with a different model + track human-vs-judge agreement to avoid optimizing toward judge bias.
+- [Phase ?]: Pinned Gemini MODEL_ID=gemini-2.5-flash (D-01); allowlist retains gemini-3.7-flash + 4 more verified ids
+- [Phase ?]: server.ts split into Vite-free createApp() + startServer(); import.meta.url entry guard keeps import test-safe
+- [Phase ?]: Model output double-guarded: Gemini responseSchema + server-side Zod safeParse before res.json
 
 ### Pending Todos
 
@@ -88,6 +96,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-17T06:47:38.749Z
-Stopped at: Phase 0 context gathered
-Resume file: .planning/phases/00-fix-to-run-ci-net/00-CONTEXT.md
+Last session: 2026-08-17T09:13:11.605Z
+Stopped at: Completed 00-01-PLAN.md
+Resume file: None
