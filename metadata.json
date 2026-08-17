@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Affiliate Content Pro",
+  "description": "Bộ tạo nội dung đa kênh cho affiliate marketing tại Việt Nam: từ mô tả sản phẩm thô + link tiếp thị liên kết, tạo bài Facebook/Threads, kịch bản video ngắn TikTok/Reels, tin nhắn deal Telegram/Zalo và phân tích sản phẩm — dùng Gemini API (key chỉ ở server).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
