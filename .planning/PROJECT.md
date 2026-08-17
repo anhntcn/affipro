@@ -26,12 +26,12 @@ Từ một mô tả sản phẩm + link affiliate, tạo ra bộ nội dung đa 
 - ✓ Trả về & hiển thị nội dung 4 kênh trên UI 4 tab (FB/Video/Tele/Phân tích) — existing
 - ✓ Nút copy nội dung từng khối — existing
 - ✓ Kiến trúc tách FE (Vite SPA) / BE (Express), 1 tiến trình phục vụ cả hai — existing
+- ✓ Generator chạy đúng & bền vững — **Phase 0** (FIX-01..FIX-06): model id hợp lệ pin sau allowlist (CI chặn id sai), ép JSON bằng responseSchema + Zod double-guard, retry đúng 1 lần chỉ cho lỗi transient (không retry lỗi deterministic), lỗi tiếng Việt không lộ nội bộ, ErrorBoundary + null-guard UI, boot fail-fast + PORT từ env, và CI net (tsc + Vitest + allowlist check) trên mỗi push/PR
 
 ### Active
 
 <!-- Hypotheses cho tới khi ship & xác nhận. -->
 
-- [ ] Sửa để chạy đúng: đổi model hợp lệ, ép JSON bằng responseSchema, guard UI khỏi crash
 - [ ] Đăng nhập bằng Google (Supabase Auth)
 - [ ] Lưu lịch sử generate theo từng user
 - [ ] Cấu hình khi generate: độ dài video (15/30/45/60s), giọng văn, kênh ưu tiên
@@ -54,7 +54,7 @@ Từ một mô tả sản phẩm + link affiliate, tạo ra bộ nội dung đa 
 
 - **Codebase hiện có**: React 19 + Vite 6 + TypeScript + Zustand + Tailwind v4 (SPA), backend Express + `@google/genai`. Bun lockfile. Chưa có DB/auth/test/CI. Chi tiết ở `.planning/codebase/`.
 - **Tích hợp duy nhất hiện tại**: Google Gemini (`GEMINI_API_KEY` server-side).
-- **Known issues cần xử lý sớm** (từ `.planning/codebase/CONCERNS.md`): model `gemini-3.7-flash` không hợp lệ (`server.ts:85`); `JSON.parse` không schema/guard (`server.ts:97`); `.map()` không null-guard trong `ResultDisplay.tsx`; không rate limit trên `/api/generate`; `PORT=3000` hardcode; thiếu `.env.local`; metadata còn template AI Studio; zero test.
+- **Known issues — phần lớn đã xử lý ở Phase 0** (từ `.planning/codebase/CONCERNS.md`): ✓ model id hợp lệ pin sau allowlist; ✓ `JSON.parse` có guard + Zod; ✓ null-guard `ResultDisplay.tsx` + ErrorBoundary; ✓ `PORT` từ env + fail-fast boot; ✓ `.env.local.example`; ✓ metadata thật (bỏ template AI Studio); ✓ có test + CI net. **Còn lại (để sau)**: rate limit trên `/api/generate` (cần trước khi public — xem Constraints).
 - **Prompt lõi**: đã có system prompt tiếng Việt định nghĩa role copywriter + schema JSON đầu ra 4 kênh (nằm trong `server.ts` và global CLAUDE.md).
 - **Nguyên tắc chống khóa nhà cung cấp**: SPA không gọi thẳng Supabase — mọi truy vấn DB/auth đi qua Express; auth bọc sau interface mỏng `verifyUser(token)`, để sau này self-host/rời Supabase chỉ là đổi URL+key + lớp auth.
 
@@ -75,7 +75,7 @@ Từ một mô tả sản phẩm + link affiliate, tạo ra bộ nội dung đa 
 | SPA không gọi thẳng Supabase, mọi thứ qua Express | Giảm khóa nhà cung cấp; migrate off sau này chỉ đổi URL+key + lớp auth | — Pending |
 | Lưu mỗi generation kèm prompt_version + config ngay từ đầu | Không có version thì không thể làm vòng lặp tối ưu về sau | — Pending |
 | LLM-as-judge chạy inline trong /api/generate (chưa worker/queue) | Quy mô nhỏ chưa cần tách; tránh over-engineer | — Pending |
-| Sửa lỗi chạy được (Phase 0) trước khi thêm auth/DB | Nền tảng phải đúng đã rồi mới xây tầng trạng thái | — Pending |
+| Sửa lỗi chạy được (Phase 0) trước khi thêm auth/DB | Nền tảng phải đúng đã rồi mới xây tầng trạng thái | ✓ Done — Phase 0 (generator schema-validated, crash-proof, khóa sau CI net) |
 
 ## Evolution
 
@@ -95,4 +95,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-17 after initialization*
+*Last updated: 2026-08-17 after Phase 0 (fix-to-run + CI net) complete*
