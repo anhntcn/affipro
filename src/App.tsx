@@ -5,6 +5,7 @@
 
 import { InputForm } from './components/InputForm';
 import { ResultDisplay } from './components/ResultDisplay';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Sparkles } from 'lucide-react';
 import { useStore } from './store/useStore';
 
@@ -52,7 +53,9 @@ export default function App() {
                 <p className="max-w-sm">Hãy nhập thông tin sản phẩm và link affiliate ở cột bên trái để AI tự động lên bài đăng đa kênh cho bạn.</p>
               </div>
             ) : (
-              <ResultDisplay />
+              <ErrorBoundary>
+                <ResultDisplay />
+              </ErrorBoundary>
             )}
           </div>
 
