@@ -80,4 +80,95 @@ describe('/api/generate', () => {
     const { ALLOWLIST } = await import('../src/schema/modelAllowlist');
     expect(ALLOWLIST).toContain(MODEL_ID);
   });
+
+  // ---- Failure-path hardening (Plan 00-02, FIX-03) ----------------------
+
+  // A response body must only ever expose a Vietnamese human message under the
+  // `error` key — never a stack, the raw error.message, or JSON-parser output.
+  function assertNoLeak(body: any) {
+    expect(Object.keys(body)).toEqual(['error']);
+    expect(typeof body.error).toBe('string');
+    expect(body.error.length).toBeGreaterThan(0);
+    // Common leak fingerprints that must NOT appear in a client-facing message.
+    expect(body.error).not.toContain('SyntaxError');
+    expect(body.error).not.toContain('at ');
+    expect(body.error).not.toContain('JSON');
+    expect(body.error).not.toContain('finishReason');
+  }
+
+  const POST = () =>
+    request(app)
+      .post('/api/generate')
+      .send({ productInfo: 'Máy xay mini', affiliateLink: 'https://a.b' });
+
+  it('MAX_TOKENS then STOP+valid on retry → 200 (retried once, succeeded)', async () => {
+    mockGenerate
+      .mockResolvedValueOnce({
+        candidates: [{ finishReason: 'MAX_TOKENS' }],
+        text: '{partial',
+      })
+      .mockResolvedValueOnce({
+        candidates: [{ finishReason: 'STOP' }],
+        text: FIXTURE_JSON,
+      });
+
+    const res = await POST();
+
+    expect(res.status).toBe(200);
+    expect(res.body.product_analysis.product_name).toBeTruthy();
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it('MAX_TOKENS on both attempts → >=400 VN error, called exactly twice', async () => {
+    mockGenerate.mockResolvedValue({
+      candidates: [{ finishReason: 'MAX_TOKENS' }],
+      text: '{partial',
+    });
+
+    const res = await POST();
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    assertNoLeak(res.body);
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it('SAFETY → >=400 VN error, called exactly ONCE (no retry), .text never parsed', async () => {
+    // No `text` field at all — mirrors a real safety block where response.text
+    // is undefined. If the handler read .text before finishReason it would crash.
+    mockGenerate.mockResolvedValue({
+      candidates: [{ finishReason: 'SAFETY' }],
+    });
+
+    const res = await POST();
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    assertNoLeak(res.body);
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it('malformed JSON text on both attempts → >=400, no crash (PARSE retryable once)', async () => {
+    mockGenerate.mockResolvedValue({
+      candidates: [{ finishReason: 'STOP' }],
+      text: 'this is not json {{{',
+    });
+
+    const res = await POST();
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    assertNoLeak(res.body);
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it('valid JSON but wrong shape → >=400 immediately, called ONCE (SCHEMA not retried)', async () => {
+    mockGenerate.mockResolvedValue({
+      candidates: [{ finishReason: 'STOP' }],
+      text: JSON.stringify({ product_analysis: { product_name: 'x' } }), // missing channels
+    });
+
+    const res = await POST();
+
+    expect(res.status).toBeGreaterThanOrEqual(400);
+    assertNoLeak(res.body);
+    expect(mockGenerate).toHaveBeenCalledTimes(1);
+  });
 });
