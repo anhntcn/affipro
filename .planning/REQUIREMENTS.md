@@ -91,17 +91,45 @@ Loại trừ rõ ràng để tránh phình scope.
 
 ## Traceability
 
-Điền trong bước tạo roadmap.
+Mapping từ ROADMAP.md (6 phases: 0–5).
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (Sẽ map khi tạo ROADMAP.md) | — | Pending |
+| FIX-01 | Phase 0 | Pending |
+| FIX-02 | Phase 0 | Pending |
+| FIX-03 | Phase 0 | Pending |
+| FIX-04 | Phase 0 | Pending |
+| FIX-05 | Phase 0 | Pending |
+| FIX-06 | Phase 0 | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| HIST-01 | Phase 2 | Pending |
+| HIST-02 | Phase 2 | Pending |
+| HIST-03 | Phase 2 | Pending |
+| HIST-04 | Phase 2 | Pending |
+| CONF-01 | Phase 2 | Pending |
+| CONF-02 | Phase 2 | Pending |
+| CONF-03 | Phase 2 | Pending |
+| CONF-04 | Phase 2 | Pending |
+| SCORE-01 | Phase 3 | Pending |
+| SCORE-02 | Phase 3 | Pending |
+| SCORE-03 | Phase 3 | Pending |
+| SCORE-04 | Phase 3 | Pending |
+| SCORE-05 | Phase 3 | Pending |
+| DASH-01 | Phase 4 | Pending |
+| DASH-02 | Phase 4 | Pending |
+| DASH-03 | Phase 4 | Pending |
+| DASH-04 | Phase 4 | Pending |
+| DEPLOY-01 | Phase 5 | Pending |
+| DEPLOY-02 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 27 total
-- Mapped to phases: 0 (chưa tạo roadmap)
-- Unmapped: 27 ⚠️
+- Mapped to phases: 27 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-17*
-*Last updated: 2026-08-17 after initial definition*
+*Last updated: 2026-08-17 after roadmap traceability mapping*
