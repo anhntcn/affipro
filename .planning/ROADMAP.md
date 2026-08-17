@@ -31,7 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. When Gemini returns truncated or malformed JSON, the user sees a clear Vietnamese error instead of a white screen (finishReason checked, parse guarded, Zod-validated server-side, ErrorBoundary + null-guards client-side)
   3. Server reads PORT from the environment and boots fail-fast with a clear message when a required env var is missing; `.env.local.example` exists and AI Studio template metadata/README are cleaned up
   4. CI runs automatically on every change: a model-id allowlist check plus happy-path and malformed-response integration tests, so a reintroduced bad model id or unguarded parse fails the build
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 00-01-PLAN.md — Foundation slice: testable createApp() + Zod contract + pinned MODEL_ID/ALLOWLIST + responseSchema + happy-path test (wave 1, FIX-01/FIX-02)
+- [ ] 00-02-PLAN.md — Failure-handling slice: finishReason gate + single retry + Vietnamese error + fail-fast loadEnv()/PORT + tests (wave 2, FIX-03/FIX-05)
+- [ ] 00-03-PLAN.md — Client-resilience slice: ErrorBoundary + null-guarded ResultDisplay + jsdom render test (wave 2, FIX-04)
+- [ ] 00-04-PLAN.md — CI net + cleanup: static allowlist check + GitHub Actions (Bun) + .env.local.example + template metadata cleanup (wave 3, FIX-01/FIX-05/FIX-06)
 
 ### Phase 1: Auth + Google OAuth
 **Goal**: A user can sign in with Google and reach the generator only when authenticated, with every /api request verified server-side behind the thin verifyUser seam.
@@ -102,7 +106,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Fix-to-run + CI net | 0/TBD | Not started | - |
+| 0. Fix-to-run + CI net | 0/4 | Planned | - |
 | 1. Auth + Google OAuth | 0/TBD | Not started | - |
 | 2. Persistence + Generate Config | 0/TBD | Not started | - |
 | 3. Scoring Loop | 0/TBD | Not started | - |
