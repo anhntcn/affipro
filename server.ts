@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 import { createServer as createViteServer } from "vite";
 import { MODEL_ID } from "./src/schema/modelAllowlist";
 import { GeneratedContentSchema } from "./src/schema/generatedContent";
+import { loadEnv } from "./server/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -197,8 +198,12 @@ export function createApp() {
 
 // Full server: createApp() + Vite dev middleware / static serving + listen().
 async function startServer() {
+  // Fail-fast env validation at BOOT (D-07): missing GEMINI_API_KEY exits the
+  // process here with a clear message rather than surfacing as a per-request 500.
+  // Not called from createApp() / import-time so tests never need a real key.
+  const env = loadEnv();
   const app = createApp();
-  const PORT = 3000;
+  const PORT = env.PORT; // read from environment (Scaling Limit fix), default 3000
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
