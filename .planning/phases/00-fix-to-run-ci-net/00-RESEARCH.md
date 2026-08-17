@@ -506,9 +506,11 @@ Because the SDK is mocked, **no `GEMINI_API_KEY` is needed in CI** (D-10). Set `
 | A3 | supertest 7 ships its own types (no `@types/supertest` needed) | Supporting stack | LOW — add `@types/supertest` if TS complains |
 | A4 | `Type` proxy mock in the test is sufficient (SDK's `Type` used only as a value map) | Pattern 6 | LOW — if the SDK validates `Type` identity, import the real enum instead of proxying |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which model id to pin?**
+> All three resolved this session (2026-08-17): **Q1** → user confirmed pinning `gemini-2.5-flash` (D-01); both ids kept in the allowlist. **Q2** → standardized on **Bun** (`bun.lock` is the only committed lockfile; CI uses `bun install --frozen-lockfile`). **Q3** → the `ResultDisplay` render test **is included** (Plan 00-03, jsdom + `@testing-library/react`).
+
+1. **Which model id to pin?** — **RESOLVED:** `gemini-2.5-flash` pinned per D-01 (user-confirmed); `gemini-3.7-flash` retained in the allowlist as a verified-valid id.
    - What we know: `gemini-2.5-flash` (D-01, stable) and `gemini-3.7-flash` (current latest, already in file) are both valid.
    - What's unclear: user preference on cost vs latest-gen for internal content generation.
    - Recommendation: default to `gemini-2.5-flash` (D-01, cheaper), but surface the choice to the user in discuss/plan; put both in the allowlist.
