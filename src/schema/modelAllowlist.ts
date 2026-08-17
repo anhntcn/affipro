@@ -1,26 +1,26 @@
 // Gemini model id pin + CI allowlist (single source of truth).
 //
 // MODEL_ID is imported by the server handler AND asserted by the CI allowlist
-// check, so the deployed model id can only ever be one of the verified-valid
-// ids below.
+// check, so the deployed model id can only ever be one of the ids below — an
+// unknown or typo'd id fails the static CI check instead of 404-ing at runtime.
 //
-// VERIFICATION: the six ids in ALLOWLIST were verified against the Google
-// Gemini deprecations documentation (ai.google.dev/gemini-api/docs/deprecations)
-// on 2026-08-17. The next editor MUST re-verify against live docs rather than
-// trust this list — model availability moves fast. Do NOT add any gemini-2.0-*
-// id: the gemini-2.0 family was shut down 2026-06-01.
+// The list holds the Gemini 2.5-family ids known valid as of this project's
+// baseline. IMPORTANT: model availability moves fast — RE-VERIFY every id
+// against live Google docs (https://ai.google.dev/gemini-api/docs/models)
+// before trusting or extending this list.
+//
+// History: four fabricated `gemini-3.x-flash` ids — including `gemini-3.7-flash`,
+// which CLAUDE.md explicitly flags as invalid — were removed here. An allowlist
+// that sanctions a non-existent model id defeats the very purpose of the guard.
 
 /** The pinned model the server calls. Must be a member of ALLOWLIST. */
 export const MODEL_ID = 'gemini-2.5-flash';
 
-/** Verified-valid Gemini model ids (verified 2026-08-17). */
+/** Gemini 2.5-family model ids known valid at baseline (re-verify before adding). */
 export const ALLOWLIST = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
-  'gemini-3.5-flash-lite',
+  'gemini-2.5-pro',
 ] as const;
 
 // Invariant: the pinned id is always a member of the allowlist.
