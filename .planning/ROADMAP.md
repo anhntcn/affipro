@@ -13,7 +13,7 @@ Affipro turns raw product info + an affiliate link into a natural, Vietnamese-tu
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 0: Fix-to-run + CI net** - Make the Gemini generator correct and lock it with tests before auth/DB churn
+- [x] **Phase 0: Fix-to-run + CI net** - Make the Gemini generator correct and lock it with tests before auth/DB churn (completed 2026-08-17)
 - [ ] **Phase 1: Auth + Google OAuth** - Google login with server-verified JWTs behind the verifyUser seam
 - [ ] **Phase 2: Persistence + Generate Config** - DB seam + schema with immutable prompt_version/config snapshot, history, and generate-time config
 - [ ] **Phase 3: Scoring Loop** - Human thumbs + inline LLM-as-judge scores with bias mitigation
@@ -133,7 +133,7 @@ Phases execute in numeric order: 0 → 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Fix-to-run + CI net | 4/4 | In Progress|  |
+| 0. Fix-to-run + CI net | 4/4 | Complete    | 2026-08-17 |
 | 1. Auth + Google OAuth | 0/TBD | Not started | - |
 | 2. Persistence + Generate Config | 0/TBD | Not started | - |
 | 3. Scoring Loop | 0/TBD | Not started | - |
