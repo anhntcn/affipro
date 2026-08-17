@@ -105,7 +105,7 @@ const AnalysisTab = ({ data }: { data: GeneratedContent['product_analysis'] }) =
     <div>
       <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Lợi ích cốt lõi (USPs)</h3>
       <ul className="space-y-2">
-        {data.key_benefits.map((benefit, idx) => (
+        {(data.key_benefits ?? []).map((benefit, idx) => (
           <li key={idx} className="flex items-start gap-2 text-gray-700">
             <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
             <span>{benefit}</span>
@@ -117,7 +117,7 @@ const AnalysisTab = ({ data }: { data: GeneratedContent['product_analysis'] }) =
 );
 
 const FacebookTab = ({ data, onCopy, copied }: { data: GeneratedContent['facebook_threads'], onCopy: (text: string, id: string) => void, copied: boolean }) => {
-  const contentString = `${data.hook_headline}\n\n${data.story_or_problem}\n\n👉 Điểm nổi bật:\n${data.product_highlights.map(h => `- ${h}`).join('\n')}\n\n${data.call_to_action}\n\n${data.hashtags.join(' ')}`;
+  const contentString = `${data.hook_headline}\n\n${data.story_or_problem}\n\n👉 Điểm nổi bật:\n${(data.product_highlights ?? []).map(h => `- ${h}`).join('\n')}\n\n${data.call_to_action}\n\n${(data.hashtags ?? []).join(' ')}`;
   
   return (
     <div className="relative animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -127,13 +127,13 @@ const FacebookTab = ({ data, onCopy, copied }: { data: GeneratedContent['faceboo
         <div className="mb-4">
           <p className="font-medium mb-2">👉 Điểm nổi bật:</p>
           <ul className="space-y-1">
-            {data.product_highlights.map((highlight, idx) => (
+            {(data.product_highlights ?? []).map((highlight, idx) => (
               <li key={idx}>- {highlight}</li>
             ))}
           </ul>
         </div>
         <p className="font-medium mb-4 text-blue-700">{data.call_to_action}</p>
-        <p className="text-blue-600 text-sm">{data.hashtags.join(' ')}</p>
+        <p className="text-blue-600 text-sm">{(data.hashtags ?? []).join(' ')}</p>
       </div>
       <CopyButton onClick={() => onCopy(contentString, 'fb')} copied={copied} />
     </div>
@@ -154,7 +154,7 @@ const VideoTab = ({ data }: { data: GeneratedContent['short_video_script'] }) =>
     
     <div className="space-y-4">
       <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Kịch bản chi tiết</h3>
-      {data.scenes.map((scene) => (
+      {(data.scenes ?? []).map((scene) => (
         <div key={scene.scene_number} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
           <div className="flex items-center gap-3 mb-3">
