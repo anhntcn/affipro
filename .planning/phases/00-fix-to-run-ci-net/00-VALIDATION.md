@@ -47,7 +47,7 @@ Package manager standardized on **Bun** (`bun.lock`); CI uses `bun install --fro
 
 | Requirement | Behavior | Threat Ref | Test Type | Test / Command | Status |
 |-------------|----------|------------|-----------|----------------|--------|
-| FIX-01 | Model id in `server.ts` ∈ static allowlist (`gemini-2.5-flash` pinned) | T-00-11 | unit + CI check | `tests/api.generate.test.ts` "model id is a member of the allowlist" + `bun scripts/check-model-allowlist.mjs` (exit 1 on bad id — proven) | ✅ green |
+| FIX-01 | Model id in `server.ts` ∈ static allowlist (`gemini-3.6-flash` pinned; repinned 2026-08-18 after 2.5-flash 404'd) | T-00-11 | unit + CI check | `tests/api.generate.test.ts` "model id is a member of the allowlist" + `bun scripts/check-model-allowlist.mjs` (exit 1 on bad id — proven) | ✅ green |
 | FIX-02 | Valid Gemini JSON → Zod passes → 200 with 4-channel body | T-00-01 | integration (mocked SDK) | `tests/api.generate.test.ts` "happy path returns validated 200 with the full 4-channel body" | ✅ green |
 | FIX-03 | Truncated/malformed/blocked response → clear VN error, no crash, no leak; bounded single retry; deterministic blocks never retried | T-00-05/06/07 | integration (mocked SDK) | `tests/api.generate.test.ts` — MAX_TOKENS retry→200, both-fail, SAFETY no-retry, **PROHIBITED_CONTENT no-retry**, PARSE retry, SCHEMA not-retried; all assert `assertNoLeak` | ✅ green |
 | FIX-03 | Zod `safeParse` rejects wrong-shape output server-side | T-00-01 | integration | `tests/api.generate.test.ts` "valid JSON but wrong shape → 400, called ONCE (SCHEMA not retried)" | ✅ green |
@@ -79,7 +79,7 @@ Package manager standardized on **Bun** (`bun.lock`); CI uses `bun install --fro
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Real end-to-end generation against the live Gemini API with a valid `gemini-2.5-flash` key | FIX-01, FIX-02 | CI mocks the SDK (no key/quota in CI); the live model id + real 4-channel output can only be confirmed against the real API | Set `GEMINI_API_KEY` locally, run the app, generate for one product, confirm all 4 channels render |
+| Real end-to-end generation against the live Gemini API | FIX-01, FIX-02 | CI mocks the SDK (no key/quota in CI); the live model id + real 4-channel output can only be confirmed against the real API | ✅ **Performed 2026-08-18**: `gemini-3.6-flash`, real product → HTTP 200 with all 4 channels. (This is what surfaced that 2.5-flash was deprecated.) |
 | GitHub Actions actually runs on push/PR | FIX-06 | Requires the `origin` remote to receive a push (remote exists but nothing pushed yet) | Push a branch, open a PR, confirm the `ci` workflow runs green |
 
 ---

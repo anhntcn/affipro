@@ -64,6 +64,12 @@ Each fix carries a locking regression test (PROHIBITED_CONTENT no-retry; non-num
 
 **Deferred (advisory, not fixed):** WR-04 (NODE_ENV enum strictness — treated as intentional), WR-05 (top-level channel objects unguarded — already caught by the ErrorBoundary), and the 3 Info items. Address later via `/gsd-code-review 00 --fix` if desired.
 
+### ⚠ Correction to CR-01 (2026-08-18, after a live-API test)
+
+The CR-01 remediation above was **partly wrong**. During the first live generation, Gemini returned `404 "gemini-2.5-flash is no longer available to new users — use gemini-3.6-flash"`. A live `ai.models.list()` + `generateContent` probe then confirmed the **Gemini 3.x flash family is real** (3.5/3.6/3.7-flash all exist and, for 3.6, are callable). CR-01 had removed the real `gemini-3.6-flash` as "fabricated" (it post-dates the tooling knowledge cutoff) and kept the now-deprecated `gemini-2.5-flash` as the pin — which broke live generation.
+
+**Actual fix (commit `684c1af`):** `MODEL_ID` repinned to the Google-recommended, live-verified `gemini-3.6-flash`; `ALLOWLIST` rebuilt from the live model list (excludes deprecated `2.5-flash` and CLAUDE.md-flagged `3.7-flash`). Live 4-channel generation now returns 200. Lesson: the model allowlist must be verified against the **live API**, never guessed from training knowledge.
+
 ## Summary
 
 Phase 00 hardened the Gemini generate seam (finishReason-first gate, guarded parse, Zod double-guard, single bounded retry, leak-free Vietnamese errors), added fail-fast boot env validation, null-guarded the render path, and locked everything behind a static, secret-free CI net. The failure-taxonomy structure is sound, the client never receives internals, and CI carries no `GEMINI_API_KEY`. The finishReason-before-`.text` ordering, the exactly-one-retry policy, and the import-time-safe `loadEnv()` all check out.

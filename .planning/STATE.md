@@ -75,7 +75,7 @@ Recent decisions affecting current work:
 - [Phase 1/2]: Two anti-lock-in seams (verifyUser auth, db/client.ts) must land before any per-user feature; SPA uses Supabase SDK for OAuth token only, all data via Express.
 - [Phase 2]: Persist an immutable prompt_version + config snapshot from the first generation — the single most important schema decision for the optimization loop.
 - [Phase 3]: LLM-judge runs inline behind services/judge.ts seam; judge with a different model + track human-vs-judge agreement to avoid optimizing toward judge bias.
-- [Phase ?]: Pinned Gemini MODEL_ID=gemini-2.5-flash (D-01); allowlist retains gemini-3.7-flash + 4 more verified ids
+- [Phase 0]: Pinned Gemini MODEL_ID=gemini-3.6-flash (repinned 2026-08-18 — 2.5-flash now returns 404 "no longer available to new users"; allowlist rebuilt from a live models.list()+generateContent probe, excludes deprecated 2.5-flash and CLAUDE.md-flagged 3.7-flash). Live 4-channel generation verified 200. Confirms the [Phase 0] "re-verify model against live docs" decision above.
 - [Phase ?]: server.ts split into Vite-free createApp() + startServer(); import.meta.url entry guard keeps import test-safe
 - [Phase ?]: Model output double-guarded: Gemini responseSchema + server-side Zod safeParse before res.json
 - [Phase ?]: 00-02: Flat GenerateOutcome shape (not discriminated union) because tsconfig lacks strictNullChecks
