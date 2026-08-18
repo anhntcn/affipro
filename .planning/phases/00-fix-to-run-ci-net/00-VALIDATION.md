@@ -53,7 +53,7 @@ Package manager standardized on **Bun** (`bun.lock`); CI uses `bun install --fro
 | FIX-03 | Zod `safeParse` rejects wrong-shape output server-side | T-00-01 | integration | `tests/api.generate.test.ts` "valid JSON but wrong shape → 400, called ONCE (SCHEMA not retried)" | ✅ green |
 | FIX-04 | `ResultDisplay` renders a missing-field payload without crashing; ErrorBoundary catches a throwing child | T-00-09/10 | render (jsdom) | `tests/ResultDisplay.test.tsx` | ✅ green |
 | FIX-05 | `loadEnv()` fails fast on missing `GEMINI_API_KEY`; `PORT` from env and rejected when non-numeric | T-00-08 | unit | `tests/config.test.ts` — default PORT, coerce PORT, **missing-key fail-fast**, **non-numeric-PORT fail-fast** | ✅ green |
-| FIX-06 | CI runs `tsc` + Vitest + allowlist on push/PR | T-00-11/12/13 | CI config + local smoke | `.github/workflows/ci.yml` present & correct; all three commands run green locally. Actual GitHub trigger → **Manual-Only** (needs a push) | ✅ config / ⚠️ trigger manual |
+| FIX-06 | CI runs `tsc` + Vitest + allowlist on push/PR | T-00-11/12/13 | CI config + live CI run | `.github/workflows/ci.yml` (`on: [push, pull_request]`); **verified on GitHub Actions run #1 → conclusion: success** (commit `1e44883`, 2026-08-18) — tsc + full Vitest + allowlist all green in CI, not just locally | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky/manual*
 
@@ -80,7 +80,7 @@ Package manager standardized on **Bun** (`bun.lock`); CI uses `bun install --fro
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
 | Real end-to-end generation against the live Gemini API | FIX-01, FIX-02 | CI mocks the SDK (no key/quota in CI); the live model id + real 4-channel output can only be confirmed against the real API | ✅ **Performed 2026-08-18**: `gemini-3.6-flash`, real product → HTTP 200 with all 4 channels. (This is what surfaced that 2.5-flash was deprecated.) |
-| GitHub Actions actually runs on push/PR | FIX-06 | Requires the `origin` remote to receive a push (remote exists but nothing pushed yet) | Push a branch, open a PR, confirm the `ci` workflow runs green |
+| GitHub Actions actually runs on push/PR | FIX-06 | Requires the `origin` remote to receive a push | ✅ **Performed 2026-08-18**: pushed `main` (commit `1e44883`) → CI run #1 completed **success**. https://github.com/anhntcn/affipro/actions/runs/32091805413 |
 
 ---
 
@@ -91,7 +91,7 @@ Package manager standardized on **Bun** (`bun.lock`); CI uses `bun install --fro
 - [x] Wave 0 covered all MISSING references (all foundation items delivered)
 - [x] No watch-mode flags (CI uses `vitest run`, not watch)
 - [x] Feedback latency < 20s (~4s measured)
-- [ ] `nyquist_compliant: true` — **not set**: 2 inherently-manual verifications remain (live API, actual CI trigger)
+- [ ] `nyquist_compliant: true` — **not set**: the 2 verifications above are inherently manual (a live API call and an actual CI trigger cannot be automated in-harness). **Both have now been performed and passed (2026-08-18), so no verification debt remains** — the flag stays false only because those checks are manual by nature, not because anything is outstanding.
 
 **Approval:** validated (PARTIAL) — 2026-08-17
 
