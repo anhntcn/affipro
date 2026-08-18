@@ -6,6 +6,7 @@ import { createServer as createViteServer } from "vite";
 import { MODEL_ID } from "./src/schema/modelAllowlist";
 import { GeneratedContentSchema } from "./src/schema/generatedContent";
 import { loadEnv } from "./server/config";
+import dotenv from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -313,6 +314,12 @@ export function createApp() {
 
 // Full server: createApp() + Vite dev middleware / static serving + listen().
 async function startServer() {
+  // Load .env.local / .env into process.env BEFORE validation so `bun run dev`,
+  // `npm run dev`, and plain `node` all pick up GEMINI_API_KEY (only Bun auto-
+  // loads .env files; npm/node do not). Done in the boot path only — never at
+  // import time — so tests importing createApp()/loadEnv() are unaffected. dotenv
+  // does not override vars already set, so an explicitly-exported env still wins.
+  dotenv.config({ path: [".env.local", ".env"] });
   // Fail-fast env validation at BOOT (D-07): missing GEMINI_API_KEY exits the
   // process here with a clear message rather than surfacing as a per-request 500.
   // Not called from createApp() / import-time so tests never need a real key.
